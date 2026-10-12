@@ -1,8 +1,8 @@
 # learn
 
-An autonomous AI tutor for [Google Antigravity (AGY)](https://antigravity.google) that teaches any topic for **deep understanding**, not rote memorization.
+An AI tutor for [Google Antigravity (AGY)](https://antigravity.google) and local ChatGPT Work that teaches any topic for **deep understanding**, not rote memorization.
 
-`learn` probes what you already know, maps out a dependency graph from first principles to your target goal, walks you through motivated discoveries with interactive modal quizzes, and tracks your retention across sessions using spaced-repetition review.
+`learn` probes what you already know, maps out a dependency graph from first principles to your target goal, walks you through motivated discoveries with quizzes, and tracks your retention across sessions using spaced-repetition review. AGY uses native modal quizzes; ChatGPT Work uses questions and answers in chat. Both share the same saved progress.
 
 ---
 
@@ -20,11 +20,27 @@ An autonomous AI tutor for [Google Antigravity (AGY)](https://antigravity.google
 
 ## Quick Start
 
-### Requirements
+### ChatGPT Work (desktop, local files)
+
+1. Open the ChatGPT desktop app and select **Work**.
+2. Create or select a local project and attach this repository folder. Use it as the primary folder, and choose local execution or an eligible Work task with local computer access. The task needs permission to read these skills and read/write `topics/`.
+3. Start a new chat in that project and say: **"Use the teach skill in `.agents/skills/teach/SKILL.md`. Teach me binary numbers."** If the skill is listed in the selector, you can also select it with `@teach`. Direct review and practice requests use the same folder.
+
+Work asks one probe/lesson question at a time in chat and waits for your answer. Review can use a numbered batch (reply, for example, `1B, 2D, 3: don't know`). The tutor links to your saved `map.md` and `log.md` as the learning map and lesson notes; it opens them alongside the chat when a file-preview tool is available. Unfinished questions are saved so they can be resumed.
+
+Continue with **"continue binary numbers"**, **"review binary numbers"**, or **"practice binary numbers"**. You can use the same topic later in AGY; there is no progress conversion. Keep one active learning session per topic to avoid conflicting edits.
+
+This setup uses the existing repository skills and files, with no plugin or API key needed. Standalone skills are supported in the desktop app; this is not an upload-only cloud setup. Local access must be available for the task. See the official OpenAI documentation for [skills](https://learn.chatgpt.com/docs/build-skills), [local projects](https://learn.chatgpt.com/docs/projects), and [Work execution options](https://learn.chatgpt.com/docs/get-started-with-work).
+
+Codex can use the same skills and chat interaction rules when opened in this folder. `AGENTS.md` provides the learning entry point; AGY retains its always-on rule below.
+
+### Antigravity CLI (unchanged launch)
+
+#### Requirements
 - **Antigravity CLI (`agy`)**: Installed and signed in (any Gemini plan supported by Antigravity).
 - No extra dependencies, Node packages, or external API keys needed.
 
-### Launching
+#### Launching
 
 ```bash
 git clone <your-repo-url> learn
@@ -40,6 +56,8 @@ On your first run with a new topic, the tutor guides you through three quick ste
 
 > [!TIP]
 > The workspace rule automatically activates the tutor. You can also explicitly say: *"use the teach skill"*.
+
+The platform instructions are implemented, but live UI verification is still pending for both AGY and ChatGPT Work. The checklist and recorded static checks are in [docs/verification.md](docs/verification.md).
 
 ---
 
@@ -58,7 +76,7 @@ flowchart TD
   B --> C["Plan: dependency DAG from roots to goal"]
   C --> D["Learner approval"]
   D --> E["Teach loop: motivate, establish, connect, quiz-check"]
-  E --> F["Save state & update live artifacts"]
+  E --> F["Save state & update live views"]
   F --> E
   E --> G["Wrap up: mastery summary & review schedule"]
 ```
@@ -69,7 +87,7 @@ flowchart TD
   1. *Motivate* (why do we need this right now?),
   2. *Establish* (derive or declare unconditionally),
   3. *Connect* (link explicitly to previous nodes),
-  4. *Quiz-Check* (modal quiz confirming the idea landed).
+  4. *Quiz-Check* (a quiz confirming the idea landed).
 
 ---
 
@@ -90,8 +108,8 @@ If you enter without naming a topic, `learn` lists your existing topics and asks
 
 ## What a Session Looks Like
 
-### 1. Interactive Modal Quizzes
-Quizzes trigger Antigravity's `ask_question` dialog. Options present bare claims with randomized positions and diagnostic distractors. Upon answering, you receive an immediate breakdown:
+### 1. Interactive Quizzes
+In AGY, quizzes trigger Antigravity's `ask_question` dialog. In ChatGPT Work, the same quiz is shown in chat and the tutor waits for your reply. Options present bare claims with randomized positions and diagnostic distractors. Upon answering, you receive a breakdown:
 
 ```markdown
 ✅ Correct
@@ -107,6 +125,8 @@ During the session, two live artifacts keep your context visible:
   - 🟠 **`shaky`** (missed or needs remediation)
   - ⚪ **`untaught`** (upcoming nodes)
 - **`lesson-notes.md`**: A running log of lessons, derived insights, and quiz recaps.
+
+Those artifact names apply to AGY. ChatGPT Work displays the underlying topic's `map.md` and `log.md` directly, with a small inline diagram or readable dependency list when needed.
 
 ### 3. Returning Start Card
 When you return to a topic, you see a quick status overview:
@@ -145,11 +165,12 @@ When reviewing nodes (`learn-review`):
 ## Workspace Layout
 
 ```
+AGENTS.md                    # Learning entry point for local OpenAI sessions
 .agents/
   rules/
     learning.md              # Always-on rule: configures AGY as an active learning workspace
   skills/
-    teach/SKILL.md           # Core teaching pedagogy, probe/plan/teach loop, quiz rules
+    teach/SKILL.md           # Shared pedagogy, platform interactions, quiz rules
     visualize/SKILL.md       # Diagram generation (Mermaid default; Draw.io support)
     learn-review/SKILL.md    # Spaced-repetition review engine and quiz batching
     learn-practice/SKILL.md  # Applied exercises, transfer challenges, language drills
@@ -174,7 +195,7 @@ agents/ extensions/ skills/  # Preserved original pi configuration (dual-compati
 
 ## Background & Credits
 
-This workspace is an AGY-native implementation inspired by [**amosblomqvist/learn**](https://github.com/amosblomqvist/learn), created by Amos Blomqvist and showcased in the video [How I Use AI to Learn Things](https://www.youtube.com/watch?v=kzcI5F4tGiU).
+This workspace adapts the original pi system for AGY and local ChatGPT Work. It is inspired by [**amosblomqvist/learn**](https://github.com/amosblomqvist/learn), created by Amos Blomqvist and showcased in the video [How I Use AI to Learn Things](https://www.youtube.com/watch?v=kzcI5F4tGiU).
 
 [![How I Use AI to Learn Things](assets/thumbnail.png)](https://www.youtube.com/watch?v=kzcI5F4tGiU)
 
@@ -183,3 +204,4 @@ This workspace is an AGY-native implementation inspired by [**amosblomqvist/lear
 - **Pedagogy:** The core teaching philosophy (unconditional truths, motivated discovery, adaptive probing) originates from Amos Blomqvist's work.
 - **AGY Adaptation:** While the original system was built for the [pi](https://github.com/earendil-works/pi) terminal assistant using custom terminal UI extensions (tmux popups and subagents), this repository rebuilds the experience natively on **Antigravity (AGY)** using native skills, `ask_question` modals, live UI artifacts, and persistent file-backed state.
 - **Dual Compatibility:** The original pi files in `agents/`, `extensions/`, and `skills/` are preserved untouched, allowing this repo to function both as an AGY workspace and as a `.pi` directory.
+- **ChatGPT Work:** The shared `.agents/skills/` instructions also support local Work with chat quizzes, file previews, and the same persistent state. AGY's modal and artifact paths remain supported.

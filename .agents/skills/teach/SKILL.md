@@ -58,12 +58,26 @@ Facts feel arbitrary when there's no visible reason they *had* to be this way, a
 
 Respect `Mode preference` in `profile.md` if set.
 
-## Tools in AGY
+## Platform interaction
 
-- **`ask_question`**: the only interactive tool. It is a blocking modal. Two uses, keep them separate:
-  - **Preference / direction questions** (goal, what next, no right answer): plain `ask_question`.
-  - **Graded quiz questions** (a right answer exists): `ask_question` plus the grading protocol below.
-- **`research` subagent** (via `invoke_subagent`): verification and scoping. See "Accuracy". Verify its available tools before assigning web research; the built-in agent is oriented toward codebase research. If it cannot access primary sources, verify them in the main session instead.
+Use the current host and available tool schemas; never assume another platform's tools exist. The question and live-view rules here also apply to `learn-review`, `learn-practice`, and `visualize`.
+
+### Antigravity CLI (AGY)
+
+- **`ask_question`**: use the blocking modal for preference / direction questions (no right answer) and graded quizzes (a right answer exists). Apply the grading protocol below after quiz answers. Probe/teach uses one question per call; review uses a batch.
+- **`research` subagent** (via `invoke_subagent`): verification and scoping. Verify its available tools before assigning web research; the built-in agent is oriented toward codebase research. If it cannot access primary sources, verify them in the main session instead.
+- Keep the current conversation's `learning-map.md` and `lesson-notes.md` artifacts as described below.
+
+### ChatGPT Work (local desktop; also applies to Codex)
+
+- Work in the attached repository folder. Before starting a persistent session, confirm you can read the skills and read/write `topics/`. If that access is missing, explain how to attach the folder and use local Work; do not claim progress was saved or create a separate cloud history.
+- **Preference / direction questions:** use a supported user-input tool when its schema permits this purpose, or ask in chat. Respect its option and question limits. An asynchronous question must receive an actual reply before dependent teaching continues; a default selection or elapsed time is not an answer.
+- **Graded quizzes and exercises:** ask in chat. Show one question with lettered options, including "Don't know", or an open-ended prompt, then end the turn and wait. Do not use preference tools for tests of knowledge, mark an option as recommended, preselect the correct answer, reveal the solution, or answer for the learner. Review may show a numbered batch and accept answers such as `1B, 2D, 3: don't know`.
+- Before ending a turn for a quiz/exercise, append its prompt, options, mode, and strand/node IDs to `log.md` as a pending question/batch, without the answer key. Append results or cancellation when resolved. On resume, recover unresolved prompts from the log; do not invent an answer or mark an unanswered node taught. If an answer is ambiguous, clarify before grading. For a partially answered review batch, log answers immediately but apply each node's aggregate schedule only when all its questions are answered or the rest are explicitly skipped; never grade unanswered questions as misses. If the learner stops or switches mode/topic, close the pending interaction, mark unanswered items canceled, and finalize any already-answered node outcomes before switching.
+- Keep each teaching turn short: explain one concept, ask its check, wait. Save an actual answer before asking the next question. Plan approval is also a real reply; keep `Session phase: plan` until it arrives.
+- **Live views:** use the existing `topics/<slug>/map.md` and `log.md` directly as the learning map and lesson notes. Link to their absolute paths and open them with an available file-preview tool at session start or topic switch. Refresh the underlying files after each result; summarize the change in chat rather than dumping the full log every turn. Show the small Mermaid map inline when useful. No AGY artifact directory is required and no duplicate state files are created.
+- **Verification:** use available web tools against primary sources in the main session. A research subagent is optional when available and authorized; AGY's `invoke_subagent` is not required.
+
 - Diagrams: see the `visualize` skill.
 - State: plain file edits under `topics/<slug>/`.
 
@@ -73,11 +87,11 @@ Read `topics/README.md` once for the file schemas. State lives in `topics/<slug>
 
 **Write-as-you-go.** Update the files **immediately** after each quiz result and each taught node, never batched to the end. If the terminal closes mid-lesson, nothing may be lost.
 
-Two live artifacts mirror the files for the current conversation (artifacts don't carry across conversations, the repo files do):
+Two live views expose the current topic's map and notes. In ChatGPT Work, use the repo files directly as described above. In AGY, two live artifacts mirror them for the current conversation (artifacts don't carry across conversations, the repo files do):
 - **`learning-map.md`**: copy the current topic's `map.md`, including its node table and status colors. Rebuild it at session start, update it after every quiz result and node.
 - **`lesson-notes.md`**: rebuild from the current topic's `log.md` at session start, then refresh after each logged result, lesson, correction, and summary. Include the topic title so a switch is visible.
 
-Use the artifact directory supplied by the current AGY conversation; never guess another conversation's path. Save the repo files first, then refresh the artifacts from them. These are separate writes, not an atomic transaction: if interrupted between them, rebuild the live views from the repo on resume. If artifacts aren't available, show the map and relevant notes inline in chat instead; the repo files are the source of truth.
+For AGY, use the artifact directory supplied by the current conversation; never guess another conversation's path. Save the repo files first, then refresh the artifacts from them. These are separate writes, not an atomic transaction: if interrupted between them, rebuild the live views from the repo on resume. If artifacts aren't available, show the map and relevant notes inline in chat instead; the repo files are the source of truth. Elsewhere below, refreshing or rebuilding the live views means using the current platform's display rules.
 
 Record `Session phase` in `profile.md` (`goal`, `probe`, `plan`, or `teach`) as the session advances. Log probe results immediately, including the strand and observed floor/ceiling; questions asked before a map exists do not create taught nodes. Once nodes exist, use the scheduling rules in `topics/README.md` for every graded result. A canceled or unanswered question changes no mastery or review dates.
 
@@ -86,16 +100,16 @@ Record `Session phase` in `profile.md` (`goal`, `probe`, `plan`, or `teach`) as 
 ### Step 0: Resolve the topic
 - The learner names a topic: slugify it (lowercase-kebab) and look for `topics/<slug>/`. Resolve it to a direct child of `topics/`; never use raw input as a path. If more than one existing topic plausibly matches, ask which one rather than merging their progress.
 - No topic named: list the folders in `topics/` and ask which one, or whether to start a new one.
-- Switching topics at any time is fine: finish saving the current result, read the destination topic's three files, and replace both artifacts with that topic's views. Never copy progress or notes between topics.
+- Switching topics at any time is fine: finish saving the current result, read the destination topic's three files, and replace both live views with that topic's views. Never copy progress or notes between topics.
 
 ### New topic: guided start (topic, goal, level)
 1. **Topic**: confirm it and create `topics/<slug>/` with `profile.md`, `map.md`, `log.md` from the schemas.
-2. **Goal**: use `ask_question` to make the goal concrete (see Phase 1b).
+2. **Goal**: use the platform's preference interaction to make the goal concrete (see Phase 1b). Reuse a concrete goal already supplied by the learner.
 3. **Level**: the adaptive graded probe (see Phase 1a).
 Then plan (Phase 2), present, and wait for go-ahead.
 
 ### Returning topic: start card
-Read all three files and rebuild both artifacts. If `Session phase` is `goal`, `probe`, or `plan`, resume that unfinished step from the saved goal and quiz results; a folder's existence does not mean its plan was approved. If the field is absent in older state, infer the phase from the log and map, asking only if approval is unclear. For a topic in `teach`, show a short card:
+Read all three files and rebuild both live views. If `Session phase` is `goal`, `probe`, or `plan`, resume that unfinished step from the saved goal and quiz results; a folder's existence does not mean its plan was approved. If the field is absent in older state, infer the phase from the log and map, asking only if approval is unclear. Resume a pending quiz/exercise before offering the mode menu, unless the learner explicitly changes mode or topic: grade an actual supplied answer or show the unresolved prompt and wait. Otherwise, for a topic in `teach`, show a short card:
 
 ```
 📚 <Topic>
@@ -104,7 +118,7 @@ Progress: <locked-in>/<total> nodes locked in · <n> shaky · <n> due for review
 Next: <next node label>
 ```
 
-Use the learner's local date for all scheduling. Compute "due" as taught nodes with a nonblank `next_review` on or before today; count each node once. Show `Next: complete` when no untaught node remains. Then use `ask_question` to offer applicable choices: **review shaky/due nodes** / **continue with the next node** / **practice**. Do **not** repeat the full probe. If a due or shaky node is a prerequisite of the next node, quick-check it before building on it. Review itself follows the `learn-review` skill; practice follows `learn-practice`. An explicit request to review or practice routes directly to that mode after rebuilding state, without asking the learner to choose it again.
+Use the learner's local date for all scheduling. Compute "due" as taught nodes with a nonblank `next_review` on or before today; count each node once. Show `Next: complete` when no untaught node remains. Then use the platform's preference interaction to offer applicable choices: **review shaky/due nodes** / **continue with the next node** / **practice**. Do **not** repeat the full probe. If a due or shaky node is a prerequisite of the next node, quick-check it before building on it. Review itself follows the `learn-review` skill; practice follows `learn-practice`. An explicit request to review or practice routes directly to that mode after rebuilding state, without asking the learner to choose it again.
 
 ### Ending the session
 When the learner says stop / wrap up, or the map is complete, write and show the **mastery summary** (also append it to `log.md`):
@@ -124,13 +138,13 @@ Run all three phases in order, every time; scale each phase's *size* to the topi
 
 ### Accuracy is non-negotiable: verify, don't wing it from memory
 
-The learner has to trust the teacher completely; one confidently-delivered hallucination poisons that. **The moment you are even slightly unsure of any fact, name, date, formula, definition, or claim, stop and confirm it with a quick `research` subagent before you say it.** Accuracy beats flow, every time. If a check changes or corrects what you were about to teach, say so plainly and record it under "Research corrections" in `log.md`. A wrong unconditional truth corrupts every node built on top of it.
+The learner has to trust the teacher completely; one confidently-delivered hallucination poisons that. **The moment you are even slightly unsure of any fact, name, date, formula, definition, or claim, stop and confirm it using the platform's verification route before you say it.** Accuracy beats flow, every time. If verification is unavailable, disclose the uncertainty and defer that claim rather than building on it. If a check changes or corrects what you were about to teach, say so plainly and record it under "Research corrections" in `log.md`. A wrong unconditional truth corrupts every node built on top of it.
 
-Brief the research subagent self-contained (it has no conversation context) and ask for this format: **Summary** (2-3 sentences) / **Findings** (numbered, each with a source link) / **Sources** (kept and dropped) / **Gaps**. Prefer official docs and primary sources over blogs; prefer recent over stale.
+When using a research subagent, brief it self-contained (it has no conversation context) and ask for this format: **Summary** (2-3 sentences) / **Findings** (numbered, each with a source link) / **Sources** (kept and dropped) / **Gaps**. Prefer official docs and primary sources over blogs; prefer recent over stale.
 
 ### Graded quizzes: grading protocol and construction
 
-During probing and teaching, each graded question is one `ask_question` call; review batches several questions per call. After each answer comes back, **grade it and reply with a result block**, then save it:
+During probing and teaching, ask one graded question using the platform interaction above; review may batch several questions. After each actual learner answer comes back, **grade it and reply with a result block**, then save it:
 
 ```
 ✅ Correct   (or ❌ Not quite)
@@ -139,7 +153,7 @@ Why: <short explanation>
 What this tells me: <what a miss reveals about your model; for a hit, what it confirms>
 ```
 
-Log each result in `log.md`, update the corresponding node and its schedule in `map.md` when one exists, and refresh both artifacts. Save a review batch's node outcome once using the aggregation rule in `topics/README.md`.
+Log each result in `log.md`, update the corresponding node and its schedule in `map.md` when one exists, and refresh both live views. Save a review batch's node outcome once using the aggregation rule in `topics/README.md`.
 
 **Construction: build the options so evenness is automatic**, don't audit afterwards:
 
@@ -152,7 +166,7 @@ Log each result in `log.md`, update the corresponding node and its schedule in `
 
 If, reading the finished set cold, you can still tell which is right without knowing the material, regenerate; don't patch.
 
-**Batching:** during probing and the teach loop, ask **one adaptive question at a time** (each answer decides the next). Batch several questions in one call only for review (`learn-review`).
+**Batching:** during probing and the teach loop, ask **one adaptive question at a time** (each answer decides the next). Batch several questions in one interaction only for review (`learn-review`).
 
 ### Phase 1: Probe (never skip for a new topic)
 
@@ -167,13 +181,13 @@ You can't teach into the learner's zone of proximal development without knowing 
 
 Do not advance until, for each goal-relevant strand, you can state concretely what the learner has and where it ends. Record this in `profile.md`'s Level table.
 
-**1b. Learning goal: `ask_question` (no right answer).** A subject someone doesn't know yet often has a goal that's hard to articulate ("understand LLMs" can mean ten things). Interrogate until concrete. Save it to `profile.md`.
+**1b. Learning goal: preference interaction (no right answer).** A subject someone doesn't know yet often has a goal that's hard to articulate ("understand LLMs" can mean ten things). Interrogate until concrete. Save it to `profile.md`.
 
 ### Phase 2: Plan (think hard)
 
 The highest-leverage step. Reason out the best way to teach *this thing* to *this person*:
 
-- **Scope the field with a `research` subagent first**: core concepts, real first principles, standard framings, gotchas.
+- **Scope the field using the platform's verification route first**: core concepts, real first principles, standard framings, gotchas.
 - What are the unconditional truths it rests on? Is there a clean atomic unit?
 - Which does the learner already hold (from 1a)? Build from there, not below or above it.
 - What's the motivated discovery path from those truths to the goal?
@@ -183,7 +197,7 @@ The highest-leverage step. Reason out the best way to teach *this thing* to *thi
 
 **Then present the plan in chat, before any teaching:**
 1. **The approach, in prose**: what we'll cover, in what order, and why this way.
-2. **The dependency map**: a small mermaid DAG, roots at top, goal at the sink, few nodes with short labels, colored by status (see `topics/README.md`). Save it to `map.md` and publish it as the `learning-map.md` artifact.
+2. **The dependency map**: a small mermaid DAG, roots at top, goal at the sink, few nodes with short labels, colored by status (see `topics/README.md`). Save it to `map.md` and display it using the platform's live-view rules (AGY: `learning-map.md` artifact; Work: linked repo file and inline map).
 
 **Stop and wait for the learner's go-ahead.** A wrong root or scope is cheap to fix now, expensive mid-lesson.
 
@@ -198,13 +212,13 @@ Build the graph one **node** at a time. Every node, foundational or derived, get
 3. **Connect.** Make the dependency edge explicit: show how this node hangs off the ones already in place.
 4. **Quiz-check.** Confirm it landed with a graded quiz. An unconfirmed foundation is as dangerous as an unconfirmed derived fact; if it's missed, fix it before building anything on top.
 
-After each node: update `map.md` (status, dates, next node), `log.md`, and the artifacts. A node that passes becomes `locked-in` (interval 1 day); a miss is `shaky`.
+After each node: update `map.md` (status, dates, next node), `log.md`, and the live views. A node that passes becomes `locked-in` (interval 1 day); a miss is `shaky`.
 
 If you catch yourself asserting something the learner would have to take on faith, stop: motivate it and confirm it lands, or ground it in something established.
 
 ## Formatting
 
-Write math in LaTeX: inline `$f(x)$`, display `$$ ... $$` fenced on their own lines. Write $f(x) = x^2$, not `f(x) = x^2`. Diagrams are mermaid by default (see `visualize`). If `Obsidian embeds` is `on` in `profile.md`, image embeds use `![[file.png|500]]`; otherwise use standard markdown links.
+Write math in LaTeX: inline `$f(x)$`, display `$$ ... $$` fenced on their own lines. Write $f(x) = x^2$, not `f(x) = x^2`. Diagrams are mermaid by default (see `visualize`). If `Obsidian embeds` is `on` in `profile.md`, saved notes use `![[file.png|500]]`; otherwise use standard markdown links. In Work chat, use standard Markdown images with absolute file paths regardless of that setting.
 
 ## Languages and skill topics
 

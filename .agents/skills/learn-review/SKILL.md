@@ -5,11 +5,11 @@ description: Review shaky and due nodes with batched quizzes and spaced repetiti
 
 # Review (spaced repetition)
 
-Read the `teach` skill's quiz rules first: the same construction and grading protocol apply here. Review is how knowledge stays locked in, and it is the spaced-repetition piece for languages and vocabulary.
+Read `../teach/SKILL.md` first, including its platform interaction and quiz rules: the same construction and grading protocol apply here. Review is how knowledge stays locked in, and it is the spaced-repetition piece for languages and vocabulary.
 
 ## 1. Pick the nodes
 
-Resolve the topic and restore its state and both artifacts using `teach` first, even when review is invoked directly. Read `topics/<slug>/map.md`. Select taught nodes only, deduplicating by node id:
+Resolve the topic and restore its state and both live views using `teach` first, even when review is invoked directly. Read `topics/<slug>/map.md`. Select taught nodes only, deduplicating by node id:
 - all nodes with `status: shaky`, then
 - nodes with `next_review` on or before today, oldest first.
 
@@ -19,11 +19,11 @@ If the learner named a specific node or sub-area ("review X"), restrict to that 
 
 ## 2. Ask, batched
 
-Review is the one place to **batch**: put the questions in a single `ask_question` call (one question per selected node; more for a node that was shaky). Apply the quiz construction rules (bare claims, mutated distractors, randomized correct position, "Don't know" option). Frame questions to test *understanding* (why, derive, apply) rather than recall of wording, since the method is about understanding.
+Review is the one place to **batch**: in AGY, put the questions in a single `ask_question` call; in Work, show a numbered batch in chat, save it as pending in the log, and end the turn to wait for answers (one question per selected node; more for a node that was shaky). Apply the quiz construction rules (bare claims, mutated distractors, randomized correct position, "Don't know" option). Frame questions to test *understanding* (why, derive, apply) rather than recall of wording, since the method is about understanding.
 
 ## 3. Grade and update
 
-For each answered question reply with the result block from `teach` (✅/❌, answer, why, what it tells me) and log it immediately. Aggregate results for each node once: any wrong or "Don't know" answer makes the node's batch outcome a miss. Unanswered questions carry no outcome. Then update `map.md` for each assessed node using its interval from before this batch:
+For each answered question reply with the result block from `teach` (✅/❌, answer, why, what it tells me) and log it immediately. Aggregate results for each node once: any wrong or "Don't know" answer makes the node's batch outcome a miss. Unanswered questions carry no outcome. In Work, wait until every question for that node is answered or explicitly skipped before applying its aggregate outcome; partial replies never cause a second advancement. Keep unanswered questions pending without revealing their solutions. Then update `map.md` for each assessed node using its interval from before this batch:
 
 | Outcome | status | interval_days | last_reviewed | next_review |
 |---|---|---|---|---|
@@ -31,7 +31,7 @@ For each answered question reply with the result block from `teach` (✅/❌, an
 | Correct, previously shaky | `locked-in` | 1 | today | tomorrow |
 | Wrong or "Don't know" | `shaky` | 1 | today | tomorrow |
 
-Use the shared scheduling rules in `topics/README.md`, including recovery from shaky status. Keep the mermaid classes, next node and updated date in sync; refresh both artifacts after saving each node's outcome.
+Use the shared scheduling rules in `topics/README.md`, including recovery from shaky status. Keep the mermaid classes, next node and updated date in sync; refresh both live views after saving each node's outcome.
 
 ## 4. Re-teach what broke
 
